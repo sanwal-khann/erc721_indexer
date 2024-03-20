@@ -12,7 +12,9 @@
   "dependencies": {
     "@ethereumjs/common": "^4.3.0",
     "dotenv": "^16.4.5",
-    "fs": "^0.0.1-security"
+    "ethereumjs-util": "^7.1.5",
+    "fs": "^0.0.1-security",
+    "web3": "^4.6.0"
   },
   "devDependencies": {
     "ethers": "^5.7.2"

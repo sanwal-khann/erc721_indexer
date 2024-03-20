@@ -1,48 +1,72 @@
 const { ethers } = require("ethers");
-const fs = require("fs");
 
-async function startListening() {
-  const rpcUrl =
-    "https://eth-mainnet.g.alchemy.com/v2/PdAq5ydIInbxKVSOmwTD5TIYk51FnMXD";
+const provider = new ethers.providers.JsonRpcProvider(
+  "https://eth-mainnet.g.alchemy.com/v2/PdAq5ydIInbxKVSOmwTD5TIYk51FnMXD"
+);
 
-  // Read ABI from JSON file
-  const abiFilePath = "./usdt.json";
-  const abi = JSON.parse(fs.readFileSync(abiFilePath, "utf-8"));
+const ERC721_TRANSFER_EVENT_SIG_HASH = ethers.utils.id(
+  "transfer(address,address,uint256)"
+);
 
-  const contractAddress = "0x6740ce1bDBbFAD351Ec6232faa8c110eBEae36Bf";
+console.log("====================================");
+console.log(ERC721_TRANSFER_EVENT_SIG_HASH);
+console.log("====================================");
 
-  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+// Fetch ERC721 Transfer events within a block range
+async function getERC721TransfersByBlockRange(fromBlock, toBlock) {
+  const filter = {
+    fromBlock,
+    toBlock,
+    topics: [ERC721_TRANSFER_EVENT_SIG_HASH],
+  };
 
-  const contract = new ethers.Contract(contractAddress, abi, provider);
-
-  // Event filter for Transfer events
-  const transferFilter = contract.filters.Transfer(null, null, null);
-
-  // Listen for  transfer events
-  contract.on(transferFilter, async (from, to, tokenId, event) => {
-    console.log("Log Properties:");
-    console.log("Address:", event.address);
-    console.log("Block Hash:", event.blockHash);
-    console.log("Block Number:", event.blockNumber.toString());
-    console.log("Log Index:", event.logIndex.toString());
-    console.log("Topics:", event.topics);
-    console.log("Data:", event.data);
-    console.log("");
-
-    async function handleERC721TransferEvent(from, to, tokenId) {
-      // Perform event filtering for self-transfers
-      if (from !== to) {
-        console.log("Indexed ERC721 Transfer Event:");
-        console.log("From:", from);
-        console.log("To:", to);
-        console.log("Token ID:", tokenId.toString());
-        console.log("");
-      }
-    }
-    await handleERC721TransferEvent(from, to, tokenId);
-  });
-
-  console.log("Listening for ERC721 token transfer events ...");
+  try {
+    const logs = await provider.getLogs(filter);
+    console.log(
+      `Found ${logs.length} ERC721 Transfer event(s) between blocks ${fromBlock} and ${toBlock}`
+    );
+    return logs;
+  } catch (error) {
+    console.error("Error fetching logs:", error);
+    return [];
+  }
 }
 
-startListening();
+function displayLogs(logs) {
+  logs.forEach((log, index) => {
+    console.log(`Log #${index + 1}:`);
+    console.log(`  Block Number: ${log.blockNumber}`);
+    console.log(`  Transaction Hash: ${log.transactionHash}`);
+    console.log(`  From: ${log.topics[1]}`);
+    console.log(`  To: ${log.topics[2]}`);
+
+    if (log.data !== "0x") {
+      console.log(
+        `  Token ID: ${ethers.utils.defaultAbiCoder
+          .decode(["uint256"], log.data)[0]
+          .toString()}`
+      );
+    } else {
+      console.log("  Token ID: N/A (data is empty)");
+    }
+
+    console.log("----------------------------------------");
+  });
+}
+
+// Main function to fetch and display  Transfer events
+async function main() {
+  const fromBlock = 19473571;
+  const toBlock = 19473572;
+
+  const logs = await getERC721TransfersByBlockRange(fromBlock, toBlock);
+  if (logs.length > 0) {
+    displayLogs(logs);
+  } else {
+    console.log(
+      `No ERC721 Transfer events found between blocks ${fromBlock} and ${toBlock}.`
+    );
+  }
+}
+
+main().catch(console.error);
