@@ -115,16 +115,11 @@
 // }
 
 // indexERC721Transfers(19473571, 19473572).catch(console.error);
-require('dotenv').config(); // Load environment variables from .env file
 
 const { ethers } = require("ethers");
 
-// Retrieve API key and private key from environment variables
-const { API_KEY } = process.env;
-
-// Create provider with API key
 const provider = new ethers.providers.JsonRpcProvider(
-  `https://eth-mainnet.g.alchemy.com/v2/${API_KEY}`
+  "https://eth-mainnet.g.alchemy.com/v2/PdAq5ydIInbxKVSOmwTD5TIYk51FnMXD"
 );
 
 // Function to check if the log corresponds to an ERC721 Transfer event
@@ -148,7 +143,11 @@ async function indexERC721Transfers(startBlock, endBlock) {
           try {
             const tokenId = ethers.BigNumber.from(log.topics[3]);
             console.log(
-              `Block Number: ${blockNumber}, Log Index: ${i}, ERC721 Transfer - From: ${log.topics[1]}, To: ${log.topics[2]}, TokenId: ${tokenId.toString()}`
+              `Block Number: ${blockNumber}, Log Index: ${
+                log.topics[0]
+              }, ERC721 Transfer - From: ${log.topics[1]}, To: ${
+                log.topics[2]
+              }, TokenId: ${tokenId.toString()}`
             );
           } catch (error) {
             console.error(
