@@ -163,7 +163,7 @@ async function indexERC721Transfers(startBlock, endBlock) {
   }
 }
 
-indexERC721Transfers(19473571, 19473572).catch(console.error);
+indexERC721Transfers(19473571, 19473581).catch(console.error);
 
 // ===============
 
